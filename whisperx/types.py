@@ -28,7 +28,7 @@ class SingleSegment(TypedDict):
     start: float
     end: float
     text: str
-    timespamps: list
+    timestamps: list
 
 
 class SingleAlignedSegment(TypedDict):
