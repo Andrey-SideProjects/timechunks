@@ -28,6 +28,7 @@ class SingleSegment(TypedDict):
     start: float
     end: float
     text: str
+    timespamps: list
 
 
 class SingleAlignedSegment(TypedDict):
