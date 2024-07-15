@@ -184,12 +184,15 @@ class FasterWhisperPipeline(Pipeline):
                 yield {'inputs': audio[f1:f2]}
 
         vad_segments = self.vad_model({"waveform": torch.from_numpy(audio).unsqueeze(0), "sample_rate": SAMPLE_RATE})
+
+        # Modified function to save timestampts from whisper
         vad_segments = merge_chunks(
             vad_segments,
             chunk_size,
             onset=self._vad_params["vad_onset"],
             offset=self._vad_params["vad_offset"],
         )
+        
         if self.tokenizer is None:
             language = language or self.detect_language(audio)
             task = task or "transcribe"
@@ -203,14 +206,6 @@ class FasterWhisperPipeline(Pipeline):
                 self.tokenizer = faster_whisper.tokenizer.Tokenizer(self.model.hf_tokenizer,
                                                                     self.model.model.is_multilingual, task=task,
                                                                     language=language)
-                
-        if self.suppress_numerals:
-            previous_suppress_tokens = self.options.suppress_tokens
-            numeral_symbol_tokens = find_numeral_symbol_tokens(self.tokenizer)
-            print(f"Suppressing numeral and symbol tokens")
-            new_suppressed_tokens = numeral_symbol_tokens + self.options.suppress_tokens
-            new_suppressed_tokens = list(set(new_suppressed_tokens))
-            self.options = self.options._replace(suppress_tokens=new_suppressed_tokens)
 
         segments: List[SingleSegment] = []
         batch_size = batch_size or self._batch_size
@@ -228,16 +223,13 @@ class FasterWhisperPipeline(Pipeline):
                     "text": text,
                     "start": round(vad_segments[idx]['start'], 3),
                     "end": round(vad_segments[idx]['end'], 3)
+                    "timestamps": vad_segments[idx]['timestamps']
                 }
             )
 
         # revert the tokenizer if multilingual inference is enabled
         if self.preset_language is None:
             self.tokenizer = None
-
-        # revert suppressed tokens if suppress_numerals is enabled
-        if self.suppress_numerals:
-            self.options = self.options._replace(suppress_tokens=previous_suppress_tokens)
 
         return {"segments": segments, "language": language}
 
