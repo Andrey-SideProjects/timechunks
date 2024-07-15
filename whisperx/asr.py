@@ -223,7 +223,7 @@ class FasterWhisperPipeline(Pipeline):
                     "text": text,
                     "start": round(vad_segments[idx]['start'], 3),
                     "end": round(vad_segments[idx]['end'], 3)
-                    "timestamps": vad_segments[idx]['timestamps']
+                    "timestamps": vad_segments[idx]['segments']
                 }
             )
 
